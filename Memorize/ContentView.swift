@@ -66,22 +66,49 @@ struct ContentView: View {
 struct CardView: View{
     let content: String
     @State var isFaceUp: Bool = true
+    @State private var dragOffset: CGSize = .zero
+    @State private var revealed: Bool = false
     
     
     var body: some View{
         ZStack {
-            let base = RoundedRectangle(cornerRadius:12)
-            Group {
-                base.fill(.white)
-                base.strokeBorder(lineWidth: 2)
-                Text(content).font(.largeTitle)
-            }
-            .opacity(isFaceUp ? 1 : 0)
-            base.fill().opacity(isFaceUp ? 0:1)
-        }
-        .onTapGesture{
-            isFaceUp.toggle()
-        }
+                    let base = RoundedRectangle(cornerRadius: 12)
+                    Group {
+                        if revealed {
+                            Text(content).font(.largeTitle)
+                        } else {
+                            base.fill(.white)
+                            base.strokeBorder(lineWidth: 2)
+                            Text(content).font(.largeTitle).opacity(isFaceUp ? 1 : 0)
+                        }
+                    }
+                    .animation(.easeInOut, value: revealed)
+                    
+                    base.fill().opacity(isFaceUp ? 0 : 1)
+                }
+                .gesture(
+                    DragGesture()
+                        .onChanged { value in
+                            dragOffset = value.translation
+                        }
+                        .onEnded { value in
+                            if abs(value.translation.width) > 100 {
+                                withAnimation {
+                                    revealed = true
+                                }
+                            } else {
+                                withAnimation {
+                                    dragOffset = .zero
+                                }
+                            }
+                        }
+                )
+                .offset(dragOffset)
+                .onTapGesture {
+                    withAnimation {
+                        isFaceUp.toggle()
+                    }
+                }
     }
 }
 
